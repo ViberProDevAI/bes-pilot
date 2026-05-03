@@ -100,9 +100,27 @@ cd ~/Projects/bes-pilot && git pull
 # Symlink kullandıysan otomatik yansır
 ```
 
-### Cowork (Claude Desktop) — şu an sorunlu
+### Cowork (Claude Desktop) — ZIP yükleme yöntemi
 
-Cowork'ün skill loader'ı `~/.claude/skills/` altındaki user skill'leri her sürümde aynı şekilde yüklemiyor. Bes-pilot bu repo'da plugin marketplace formatında da hazır (`/plugin marketplace add ViberProDevAI/bes-pilot` + `/plugin install bes-pilot` komutlarıyla install edilmesi gerekiyor) ama bu komutlar bazı Cowork sürümlerinde tanınmıyor. Cowork desteği henüz **garantili değil** — şimdilik Claude Code üzerinden kullan, Cowork uyumu sürüm güncellendikçe iyileşecektir.
+> ⚠️ **Anthropic bilinen bug** ([Issue #39400](https://github.com/anthropics/claude-code/issues/39400)): Marketplace üzerinden kurulan plugin'lerin skill dosyaları Cowork container'ına mount edilmiyor. Plugin listede görünür ama "skill bulunamadı" hatası alırsın. ZIP yükleme yöntemi bu bug'ı atlatıyor.
+
+**Adımlar (Pro/Max/Team/Enterprise gerekiyor):**
+
+1. ZIP'i indir:
+   - Repo'yu klonladıysan: `cd ~/Projects/bes-pilot && zip -r ~/Desktop/bes-pilot.zip bes-pilot .claude-plugin LICENSE README.md -x "*/__pycache__/*" -x "*/.DS_Store"`
+   - Klonlamadıysan: GitHub'dan repo'yu ZIP olarak indir, içinden `bes-pilot/` ve `.claude-plugin/` klasörlerini birleştir
+
+2. Cowork'te:
+   - **Cowork sekmesi** → sol sidebar **"Customize"**
+   - **"Browse plugins"** → **"Add plugin"** → **"Upload"**
+   - `bes-pilot.zip` seç
+   - Yüklendi mesajını gör
+
+3. Cowork'ü Cmd+Q ile tamamen kapat + tekrar aç
+
+4. Yeni sohbet → `/bes-pilot` veya "BES sepetimi kur"
+
+5. Yanıtın ilk satırında `🎯 **bes-pilot v0.2.0** —` görmüyorsan skill yüklenmemiştir.
 
 ### Bağımlılıklar
 
