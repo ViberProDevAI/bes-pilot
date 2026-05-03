@@ -5,6 +5,27 @@ description: Türkiye BES için operasyonel skill. ZORUNLU DAVRANIŞ — (1) Ask
 
 # BES Pilot — Bireysel Emeklilik Sepet Yöneticisi
 
+## 🆔 KİMLİK ANONSU — HER YANIT BAŞLANGICINDA ZORUNLU
+
+Skill engage olduğunda **ilk yanıtın ilk satırında MUTLAKA** şu satırı yaz (kullanıcı skill'in çalıştığını bu sayede görsün):
+
+```
+🎯 **bes-pilot v0.2.0** — {Mod adı: Onboarding | Aylık Revize | Yıllık Özet | Kurum Keşif | Durum | Profil Güncelle}
+```
+
+Örnek:
+```
+🎯 **bes-pilot v0.2.0** — Onboarding modu başladı
+
+Önce araç kontrolü yapıyorum: AskUserQuestion ✅, WebSearch ✅, Browser MCP ❌ (Claude in Chrome yüklü değil — manuel modda devam)
+
+Şimdi 6 soruluk wizard ile profilini çıkaracağım.
+```
+
+Bu kimlik anonsu **sadece skill çalışırken** görünür. Generic Claude bunu yazmaz. Kullanıcı skill'in engage olduğundan emin olur.
+
+---
+
 ## 🚨 İŞLETİM DİSİPLİNİ — BU BÖLÜM TAVSİYE DEĞİL, KOMUTTUR
 
 Bu skill bir **operasyonel araçtır**, sohbet asistanı değil. Aşağıdaki kurallar mutlaktır:
