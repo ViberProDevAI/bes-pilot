@@ -112,35 +112,165 @@ Sembolik linkle kurduysan `git pull` yeterli; ek kopya gerekmez.
 - Veri toplama için **WebSearch + WebFetch** araçları (Cowork'te varsayılan)
 - Aylık otomatik tetikleme için **scheduled-tasks MCP** (Cowork'te varsayılan, opsiyonel)
 
-## Hızlı Başlangıç
+## Skill nasıl düşünür? (karar gerekçesi)
+
+Skill, BES sepetini **dört katmanlı disiplinli bir karar süreciyle** kurar — basit "şu fonlar iyi" yaklaşımı değil. Her katman farklı bir veri kaynağına dayanır:
+
+### Katman 1 — Risk profili (5 soru, 4 boyut)
+
+| Soru | Ne ölçer | Örnek puan etkisi |
+|---|---|---|
+| Doğum tarihi + hedef yaş | **Vade** (yıl) | ≥20 yıl: +2 / <10 yıl: −2 |
+| Aylık katkı + birikim | **DCA gücü** | Katkı ≥ gelirin %10'u: +1 |
+| "%15 düştü, ne yaparsın?" | **Kayıp toleransı (psikolojik)** | A: −3 / B: 0 / C: +3 — **HARD OVERRIDE** |
+| BES'ten beklenti | **Hedef** | A: −2 / B: 0 / C: +2 |
+| Kurum + sözleşmeler | **Operasyonel** | (puanlamaz, adapter seçimi için) |
+
+Toplam puan ≤ −3 = DEFANSİF, −2 ile +2 = DENGELİ, ≥ +3 = AGRESİF.
+
+> **Sert kural**: Soru 3'te A diyene **agresif sepet asla yapılmaz**, başka cevaplar ne olursa olsun. Kullanıcı paniklerse erken bozdurur, en kötü senaryo bu.
+
+### Katman 2 — Konjonktürel araştırma (her revizede yeniden)
+
+`references/fund_research.md` — **4 kademeli yedekli veri zinciri** ile 6 soruya cevap arar:
+
+```
+CNBCe haftalık derleme → besfongetirileri.com → fintables.com → TEFAS → manuel kullanıcı girişi
+```
+
+En az **2 kaynaktan teyit** alır. Hepsi başarısızsa kullanıcıya açık olur ("veri yok, manuel ver"), sessiz tahmin yapmaz.
+
+6 soru:
+1. **Lider tema** nedir? (teknoloji / altın / borçlanma / ...)
+2. **Konsantrasyon**: top 10'un kaçı tek kategoride? (≥7 = belirgin sinyal)
+3. **Trend doğrulanmış mı**? (hafta = ay yönü)
+4. **Counter-momentum fırsatı** var mı? (en kötü kategori 3+ ay düşmüş mü)
+5. **Makro şok** var mı? (TCMB faizi, USDTRY, jeopolitik)
+6. **Regülasyon değişikliği** var mı? (Genelge takip)
+
+### Katman 3 — Sepet algoritması (`references/basket_construction.md`)
+
+Profil iskeletine konjonktürel **tilt** uygular:
+
+| Durum | Tilt |
+|---|---|
+| Belirgin tema lider (top 10'un %70+'ı) | O kategoriye **+%10**, defansif kategorilerden −%10 |
+| Trend doğrulanmış | Tilt korunur |
+| Trend belirsiz | Tilt yapılmaz, iskelete sadık kal |
+| Makro şok | Defansife **+%10** geçici geçiş |
+| **Defansif kullanıcı** | Tilt **max ±%5** (sektör bahsi yapılmaz) |
+
+**Çoklu fon kuralı** (tek kategori içinde, yönetici risk dağıtımı):
+- Ağırlık <%15 → 1 fon
+- %15-30 → **2 farklı kurucu**
+- >%30 → **3 farklı kurucu**
+
+**Stabilite cezası** (12 hak/yıl boşa harcanmasın):
+- Geçen ay sepetiyle <%15 değişiklik → "**pas geç**" öneri
+- <%2 ek getiri beklentisi olan değişiklik → yapma
+
+### Katman 4 — Performans geri besleme (yeni!)
+
+Her revizede **önceki sepetin gerçek getirisi ölçülür**:
+
+```
+sepet_getiri = Σ (fon_ağırlığı × (yeni_pay_fiyatı / önceki_pay_fiyatı − 1))
+reel_getiri = sepet_getiri − TÜFE
+benchmark_farkı = sepet_getiri − BIST 100
+```
+
+Pay fiyatları: TEFAS resmi + eSube fon detayı. Benchmark'lar: TCMB EVDS (BIST), TÜİK (TÜFE).
+
+**Eğer 2 ay üst üste benchmark altıysa skill stratejiyi sorgular**: "Önceki yaklaşım çalışmadı, profili gözden geçirelim mi?" Yani strateji **inanç** değil, **ölçüm** meselesi.
+
+## Kişiselleştirme garantisi
+
+> Senin sepetin başka birine **bire bir** verilmez — 4 boyutta kişiselleşir:
+
+1. **Risk profili**: Defansif vs agresif tamamen farklı sepet (%25 hisse vs %75 hisse)
+2. **Kurum**: BEFAS kapalıysa sadece kendi kurum fonların. Türkiye Hayat'ta TVH/TBJ, Anadolu'da BHT
+3. **Vade + yaş**: Yaş eşik geçişlerinde profil otomatik gözden geçirilir (40, 55) — kullanıcı override edebilir, kayıt altında
+4. **Sözleşme ekosistemi**: 18 yaş altı kumbara hesabı varsa farklı (kullanıcı açıkça istemediği sürece muhafazakar). Birden fazla sözleşme = her biri ayrı revize seçeneği
+
+Ek kişiselleşme:
+- `profile.md` "Kullanıcı override geçmişi" — "Bu eşik bana uymaz" dediğin tüm kararlar kayıtlı
+- `current_basket.md` "Önceki sepetin gerçek getirisi" — sadece sana özel performans verisi
+- `history/{YYYY-MM}.md` — tüm aylık kararlar, gerekçeler, sonuçlar
+
+## Sonraki ay ne olacak? (aylık akış)
+
+`/bes-revize` (manuel) veya scheduled task tetiklediğinde **9 adım**:
+
+1. Memory aç (profile + current_basket + son 3 ay history)
+2. **Yaş kontrolü** (otomatik, doğum tarihinden)
+3. **Önceki sepetin gerçek getirisini ölç** — TEFAS pay fiyatı + BIST 100 + TÜFE
+4. Bu ayın piyasa verisi (yedekli zincir, 6 soruya cevap)
+5. Karşılaştır → değişiklik gerekli mi? **2 ay üst üste underperform stratejiyi sorgular**
+6. Yeni sepeti hesapla (gerekirse)
+7. Kullanıcıya öneri (önceki performans dahil format)
+8. Onay → eSube → uygula → pay fiyatlarını al
+9. history yaz, current_basket güncelle
+
+Yıl başında (Ocak ilk revize) önce **yıllık özet** çalışır:
+- 12 ayın **compound** getirisi (basit ortalama değil)
+- Aylık BIST 100 + TÜFE benchmark karşılaştırması
+- Tema dağılımı (kaç ay teknoloji, enerji, altın, ...)
+- En isabetli karar / geriye dönüp baktığımızda hata
+- Hak kullanım analizi
+- Vergi sezonu hatırlatma (Mart-Nisan)
+
+## Kısa örnek diyalog
 
 ```
 Sen: BES sepetimi kur
 
-Claude: Hoş geldin! 5 soruda profilini çıkaracağım.
-        1. Kaç yaşındasın? Emeklilikten ne zaman çıkmak istiyorsun?
-        ...
+Claude: Hoş geldin. Önce kim için çalışacağımızı bilmem lazım — adın? 
+        Sonra 5 soruyla profilini çıkaracağım.
         
-[5 soru sonra]
+Sen: [profil bilgileri verir]
 
-Claude: Senin profilin "DENGELİ". Şu anda piyasada teknoloji teması güçlü.
-        Önerilen sepet:
-        - TVH 13%, TBJ 13%, GCN 12%, YZD 12%, FFC 10%, ENF 10%, VES 20%, VGA 10%
-        Onaylıyor musun?
-
-Sen: Evet
-
-Claude: Tamam. Türkiye Hayat eSube'sine giriyorum...
-        [browser ile eSube'ye girer, fon dağılımı değişiklik ekranına gider,
-         BEFAS'ı açar, kurumları ekler, fonları seçer, yüzdeleri yazar]
+Claude: Profilin DENGELİ (puan +1). Soru 3'te B dedin, override yok.
+        Bu hafta + bu ay piyasa verisi topluyorum...
         
-        ✅ Sepet hazır, toplam %100. Şimdi sayfanın altındaki "Tamam" butonuna SEN bas.
-        SMS doğrulamayı sen onaylayacaksın. İşlem 4-7 iş günü içinde gerçekleşir.
+        [4 kademeli yedekli zincirden veri çeker, en az 2 kaynaktan teyit alır]
+        
+        Bu ayın özeti:
+        - Lider tema: Teknoloji (haftalık 7/10 fon, aylık 9/10)
+        - Trend doğrulanmış (hafta = ay yönü)
+        - Makro: TCMB faiz sabit, USDTRY 35.40
+        
+        Önerilen sepet (Türkiye Hayat + BEFAS):
+        - VES 20% (Borçlanma TL — koruma)
+        - VGA 10% (Altın katılım — enflasyon hedge)
+        - TVH 13% + TBJ 13% (Teknoloji — 2 farklı kurucu, %26 ağırlık için)
+        - GCN 12% + YZD 12% + FFC 10% (Teknoloji çeşitlendirme)
+        - ENF 10% (Enerji rotasyonu)
+        
+        Gerekçe: Dengeli iskeletten teknoloji teması için +%10 tilt 
+        (top 10'un %70+'ı tek kategoride). Borçlanma %25→%20'ye 
+        çekildi. 4 farklı kurucudan teknoloji fonu — yönetici risk 
+        dağıtımı (>%30 ağırlık için 3+ kurucu kuralı).
+        
+        Toplam %100. Onaylıyor musun? Yoksa ayar isteyen var mı?
 
-Sen: yaptım
+Sen: [onayladıktan sonra eSube otomasyonu, kullanıcı "Tamam"a basar, 
+      pay fiyatları kaydedilir, history yazılır]
 
-Claude: Mükemmel. Kayıt edildi. Bir sonraki revize: 1 Haziran. 
-        Otomatik scheduled task kurmak ister misin?
+[Bir ay sonra /bes-revize çalıştırılınca]
+
+Claude: Önceki sepetinin gerçek getirisi (33 gün):
+        - Sepet: +%3.45
+        - BIST 100 aynı aralık: +%2.83  
+        - TÜFE Nisan: +%1.92
+        - Reel getiri: +%1.53 ✅ (TÜFE üstü)
+        - Benchmark farkı: +%0.62 ✅ (BIST üstü)
+        
+        Strateji çalıştı. Bu ayın piyasa özeti:
+        [...yeni veri]
+        
+        Önerim: PAS GEÇ (sepet ile öneri %92 örtüşüyor, 
+        marjinal değişiklik anlamlı değil — fon hakkını koruyalım, 
+        kalan: 8/12).
 ```
 
 ## Güvenlik
