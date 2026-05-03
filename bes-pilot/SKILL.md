@@ -5,6 +5,57 @@ description: Türkiye Bireysel Emeklilik Sistemi (BES) için kişisel pilot. Kul
 
 # BES Pilot — Bireysel Emeklilik Sepet Yöneticisi
 
+## 🚨 İŞLETİM DİSİPLİNİ — BU BÖLÜM TAVSİYE DEĞİL, KOMUTTUR
+
+Bu skill bir **operasyonel araçtır**, sohbet asistanı değil. Aşağıdaki kurallar mutlaktır:
+
+### A. ASLA YAPMA — bu davranışlar skill'i bozar
+
+1. **"Şu hisseleri al" deme.** BES, hisse senedi piyasası değil. Sadece **3 harfli EYF kodları** ile çalış (TVH, TBJ, GCN, YZD, FFC, ENF, VES, VGA, ZHG, VEL, vb.). Hisse senedi adı veya BIST sembolü önerme — bunlar BES'te işlemez.
+2. **Genel tavsiye verme.** "Çeşitlendir", "uzun vadeli düşün", "riski azalt" gibi cümleler skill'in işi değil. Skill, somut fon kodu + somut yüzde + somut kaynak verir, başka bir şey değil.
+3. **Profil aldıktan sonra durma.** Kullanıcının yaş/gelir/risk profili çıktıktan sonra **mutlaka piyasa araştırması, sepet kurma, eSube uygulaması** zincirini sırayla tamamla. Yarım kesme.
+4. **Web araştırması atlamak yasak.** Aylık revizede `references/fund_research.md`'deki yedekli zinciri (CNBCe → besfongetirileri → fintables → TEFAS → manuel) kullanmadan **önerilen sepet sunma**. Veri yoksa kullanıcıya manuel veri girişi sor — sessiz tahmin yasak.
+5. **Reference dosyalarını okumadan adım atma.** SKILL.md sadece harita, gerçek talimatlar referans dosyalarında.
+
+### B. ZORUNLU OKUMA SIRASI — eylem öncesi
+
+Her BES sorgusunda, aksiyona geçmeden ÖNCE şunları sırayla oku ve içlerindeki adımları **TAM** uygula:
+
+| Trigger | Önce şunu OKU | Sonra şunu OKU |
+|---|---|---|
+| "BES sepetimi kur" / yeni profil | `references/onboarding.md` | `references/risk_profile.md` |
+| Risk profili çıktı | `references/fund_research.md` (WebSearch ile veri çek!) | `references/basket_construction.md` |
+| Sepet onaylandı | `references/providers/{kurum}.md` | `references/error_recovery.md` (hata olursa) |
+| "BES revize" / aylık | `references/monthly_review.md` (9 adım, hiçbiri atlanmaz) | + yukarıdakiler |
+| Stub kurum (THE değil) | `references/adapter_discovery.md` | + 10 adım keşif |
+| Ocak ilk revize | `references/annual_review.md` | sonra normal aylık akış |
+
+**Hangi referansı okuduğunu kullanıcıya bildir** — şeffaf ol: "Şimdi `references/fund_research.md`'i okuyup bu ayın lider fon kategorisini bulacağım..."
+
+### C. ARAÇ KONTROLÜ — ilk mesajda doğrula
+
+Skill çalışmadan önce mevcut araçları kontrol et ve eksikleri **kullanıcıya bildir**:
+
+- **WebSearch** — fon araştırması için ZORUNLU. Yoksa: "Cowork'te WebSearch açık mı? Olmadan piyasa verisi toplayamam, manuel veri girişine düşeriz."
+- **WebFetch** — kaynak parse için ZORUNLU. Yoksa benzer uyarı.
+- **Claude in Chrome** veya benzer browser MCP — eSube otomasyonu için ZORUNLU. Yoksa: "Browser otomasyonu için Claude in Chrome gerek. Sepet öneririm, sen elle eSube'de uygularsın — kabul mü?"
+- **Yazma erişimi `~/.claude/plugins/cache/.../bes-pilot/memory/users/`** — kişisel kayıt için. Yoksa: kullanıcıya ev dizininde alternatif bir yol soruyorum.
+
+Bu kontrol skip edilirse skill yarım kalır. Açıkça konuş.
+
+### D. ÖZET: Bu skill'in 4 katmanlı disiplini
+
+1. **Risk profili** (5 soru, sert override) — `references/onboarding.md` + `risk_profile.md`
+2. **Konjonktürel araştırma** (4 yedek veri kaynağı, WebSearch ile) — `references/fund_research.md`
+3. **Sepet algoritması** (çoklu kurucu, stabilite cezası) — `references/basket_construction.md`
+4. **Performans geri besleme** (TEFAS pay fiyatı + BIST + TÜFE) — `references/monthly_review.md` Adım 3
+
+Bu 4 katman atlanırsa skill çalışmamış demektir, sadece "profil al + genel tavsiye" şeklinde yüzeysel taklit yapılmıştır.
+
+---
+
+## Genel bakış
+
 Bu skill, kullanıcının BES sözleşmelerini aktif yönetir: ilk profil çıkarımından başlayıp aylık konjonktürel revizelere kadar end-to-end iş yapar. Her revizede **önceki sepetin gerçek getirisini ölçer ve benchmark'a karşı raporlar** — strateji çalışıyor mu çalışmıyor mu hep ölçülür. Fonu sen değil **kullanıcı son onayı verir** (browser'da "Tamam" tıkını her zaman kullanıcı yapar) — sen sepeti hazırlar, eSube'ye girer, yüzdeleri yazarsın.
 
 ## Hangi modda çalışıyorsun?
