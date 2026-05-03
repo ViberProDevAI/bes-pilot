@@ -1,0 +1,335 @@
+{
+  "skill_name": "bes-pilot",
+  "schema_version": 2,
+  "test_categories": [
+    "trigger",
+    "risk_profile_calculation",
+    "override_rules",
+    "stability_penalty",
+    "age_threshold",
+    "data_fallback",
+    "error_recovery",
+    "memory_schema"
+  ],
+  "evals": [
+    {
+      "id": 1,
+      "category": "trigger",
+      "prompt": "merhaba, BES sepetimi kurmak istiyorum. doğum tarihim 01.01.1985 (sentetik test verisi), türkiye hayat'ta sözleşmem var",
+      "expected_output": "Skill tetiklenir, onboarding moduna girer. Doğum tarihi zaten verildiği için Soru 1'in vade kısmından devam eder. Yaş otomatik hesaplanır, profile.md'ye doğum tarihi olarak yazılır (yaş yazılmaz).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "category": "trigger",
+      "prompt": "BES revize zamanı geldi, bu ayın sepetini güncelle",
+      "expected_output": "Skill monthly_review moduna girer. Profil yoksa onboarding'e yönlendirir. Varsa (i) yaş eşiği kontrolü, (ii) önceki sepetin gerçekleşmiş getirisi hesabı, (iii) piyasa verisi toplama, (iv) öneri sırasını izler.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "category": "trigger",
+      "prompt": "BES sepetimde ne var, kaç hak kalmış?",
+      "expected_output": "Skill bes-durum komutuna düşer. current_basket.md'yi okuyup tablo halinde gösterir, kalan hakkı söyler, son revizenin gerçekleşmiş getirisini de gösterir.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "category": "trigger",
+      "prompt": "Anadolu Hayat'ta BES'im var, fonlarımı yönetmeme yardım eder misin?",
+      "expected_output": "Skill tetiklenir. Anadolu Hayat için adapter'ın stub olduğunu (provider listesinde 🟡), keşif modunda ekran-ekran ilerleneceğini, kullanım sonrası adapter yazılacağını söyler.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "category": "trigger",
+      "prompt": "emeklilik için ay başında para yatırmaya başlamayı düşünüyorum, ne yapmalıyım",
+      "expected_output": "Skill tetiklenir (emeklilik / BES tema). Onboarding'e davet eder, doğum tarihi + 5 soruyla profilini çıkartmayı önerir.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "category": "risk_profile_calculation",
+      "name": "Dengeli profil — sınır puanı",
+      "input": {
+        "vade_yil": 25,
+        "soru1_puan": 2,
+        "dca_guc": "orta",
+        "soru2_puan": 0,
+        "kayip_tepkisi": "B",
+        "soru3_puan": 0,
+        "hedef": "B",
+        "soru4_puan": 0
+      },
+      "expected_output": {
+        "toplam_puan": 2,
+        "profil": "DENGELİ",
+        "override_aktif": false
+      },
+      "rationale": "Toplam puan +2, eşik (-2 ile +2 arası) içinde, dengeli."
+    },
+    {
+      "id": 7,
+      "category": "risk_profile_calculation",
+      "name": "Agresif profil — yüksek puan",
+      "input": {
+        "vade_yil": 30,
+        "soru1_puan": 2,
+        "dca_guc": "yuksek",
+        "soru2_puan": 1,
+        "kayip_tepkisi": "C",
+        "soru3_puan": 3,
+        "hedef": "C",
+        "soru4_puan": 2
+      },
+      "expected_output": {
+        "toplam_puan": 8,
+        "profil": "AGRESİF",
+        "override_aktif": false
+      },
+      "rationale": "Toplam puan +8, ≥+3 → AGRESİF."
+    },
+    {
+      "id": 8,
+      "category": "risk_profile_calculation",
+      "name": "Defansif profil — düşük puan",
+      "input": {
+        "vade_yil": 7,
+        "soru1_puan": -2,
+        "dca_guc": "dusuk",
+        "soru2_puan": -1,
+        "kayip_tepkisi": "B",
+        "soru3_puan": 0,
+        "hedef": "A",
+        "soru4_puan": -2
+      },
+      "expected_output": {
+        "toplam_puan": -5,
+        "profil": "DEFANSİF",
+        "override_aktif": false
+      },
+      "rationale": "Toplam puan -5, ≤-3 → DEFANSİF."
+    },
+    {
+      "id": 9,
+      "category": "override_rules",
+      "name": "Kayıp toleransı override — agresif yasak",
+      "input": {
+        "vade_yil": 30,
+        "soru1_puan": 2,
+        "dca_guc": "yuksek",
+        "soru2_puan": 1,
+        "kayip_tepkisi": "A",
+        "soru3_puan": -3,
+        "hedef": "C",
+        "soru4_puan": 2
+      },
+      "expected_output": {
+        "toplam_puan": 2,
+        "raw_profile_proposal": "DENGELİ",
+        "profil": "DENGELİ",
+        "override_aktif": true,
+        "override_aciklama": "Soru 3 cevabı A — kayıp toleransı düşük, agresif yasak"
+      },
+      "rationale": "Soru 3'te A cevabı verildi. Toplam puan +2 zaten DENGELİ aralığında ama eğer DCA puanı +1 yerine +2 olsa toplam +3 = AGRESİF olurdu, override bunu engellemeli."
+    },
+    {
+      "id": 10,
+      "category": "override_rules",
+      "name": "Override kuralı agresif iddiasını engellemeli",
+      "input": {
+        "vade_yil": 30,
+        "soru1_puan": 2,
+        "dca_guc": "yuksek",
+        "soru2_puan": 1,
+        "kayip_tepkisi": "A",
+        "soru3_puan": -3,
+        "hedef": "C",
+        "soru4_puan": 2,
+        "raw_total_force_test": 3
+      },
+      "expected_output": {
+        "raw_profile_proposal": "AGRESİF",
+        "profil": "DENGELİ",
+        "override_aktif": true,
+        "override_aciklama": "Toplam puan +3 = AGRESİF eşiği, ama Soru 3=A nedeniyle DENGELİ'ye düşürüldü"
+      },
+      "rationale": "Override sert kural: A cevabı verildiyse AGRESİF asla."
+    },
+    {
+      "id": 11,
+      "category": "stability_penalty",
+      "name": "%92 örtüşme — pas geçme önerisi",
+      "input": {
+        "onceki_sepet": {"TVH": 13, "TBJ": 13, "GCN": 12, "YZD": 12, "FFC": 10, "ENF": 10, "VES": 20, "VGA": 10},
+        "onerilen_sepet": {"TVH": 13, "TBJ": 13, "GCN": 12, "YZD": 13, "FFC": 9, "ENF": 10, "VES": 20, "VGA": 10},
+        "fon_seti_aynii_mi": true
+      },
+      "expected_output": {
+        "ortusme_yuzde": 99,
+        "karar": "PAS_GEC_ONER",
+        "kullanici_secenekleri": ["A: Pas geç (önerilir)", "B: Marjinal tweak"]
+      },
+      "rationale": "Sadece YZD 12→13, FFC 10→9 — toplam %1 reshuffle. <%15 olduğu için pas geçme önerilir."
+    },
+    {
+      "id": 12,
+      "category": "stability_penalty",
+      "name": "Köklü revize — 50%+ değişim",
+      "input": {
+        "onceki_sepet": {"AGB": 50, "HHY": 20, "FFC": 15, "VEH": 9, "CFA": 6},
+        "onerilen_sepet": {"TVH": 13, "TBJ": 13, "BZY": 13, "ENF": 13, "GCN": 12, "YZD": 12, "FFC": 12, "TSZ": 12}
+      },
+      "expected_output": {
+        "ortusme_yuzde": 12,
+        "karar": "KOKLU_REVIZE",
+        "kullanici_secenekleri": ["A: Onayla ve uygula", "B: Detay görmek istiyorum"]
+      },
+      "rationale": "Sadece FFC ortak (15 → 12), diğer fonların hepsi yeni. <%85 örtüşme, köklü revize."
+    },
+    {
+      "id": 13,
+      "category": "age_threshold",
+      "name": "40 yaşına geçişte agresif → dengeli öneri",
+      "input": {
+        "dogum_tarihi": "1986-01-01",
+        "bugun": "2026-01-01",
+        "mevcut_profil": "AGRESİF",
+        "override_gecmisi_var_mi": false
+      },
+      "expected_output": {
+        "hesap_yas": 40,
+        "esik_gecildi_mi": true,
+        "oneri": "DENGELİ",
+        "kullaniciya_sor": true
+      },
+      "rationale": "Doğum 1986-01-01, bugün 2026-01-01 → tam 40 yaş. Override geçmişi yok, bir kez sor."
+    },
+    {
+      "id": 14,
+      "category": "age_threshold",
+      "name": "40 yaş geçişi ama kullanıcı önceden override etmişse tekrar sorma",
+      "input": {
+        "dogum_tarihi": "1985-01-01",
+        "bugun": "2026-01-01",
+        "mevcut_profil": "AGRESİF",
+        "override_gecmisi": [
+          {"tarih": "2025-01-01", "skill_onerisi": "AGRESİF → DENGELİ (40 eşiği)", "kullanici_karari": "REDDETT", "sebep": "Vade hala 25 yıl"}
+        ]
+      },
+      "expected_output": {
+        "hesap_yas": 41,
+        "esik_gecildi_mi": false,
+        "oneri": null,
+        "kullaniciya_sor": false,
+        "not": "Geçen yıl bu eşik için override edildi, tekrar sorma"
+      },
+      "rationale": "Profile.md'deki override geçmişi tek seferlik soruyu kayıtlıyor. Geçen yıl 'reddet' dediyse tekrar sormaz."
+    },
+    {
+      "id": 15,
+      "category": "data_fallback",
+      "name": "CNBCe başarısız → besfongetirileri başarılı",
+      "input": {
+        "kaynak_durumu": {
+          "cnbce": {"basarili": false, "hata": "parse: HTML pattern eşleşmedi"},
+          "besfongetirileri": {"basarili": true, "veri_satiri": 10}
+        }
+      },
+      "expected_output": {
+        "kullanilan_kaynak": "besfongetirileri",
+        "veri_var": true,
+        "kullaniciya_uyari": "İkincil kaynak kullanıldı, veri kaliteli ama CNBCe parse hatası raporlanmalı"
+      },
+      "rationale": "Yedekli zincirin doğru çalışması: ilki kırıldıysa otomatik geçer, sessiz başarısızlık olmaz."
+    },
+    {
+      "id": 16,
+      "category": "data_fallback",
+      "name": "Tüm kaynaklar başarısız → manuel devir",
+      "input": {
+        "kaynak_durumu": {
+          "cnbce": {"basarili": false, "hata": "parse"},
+          "besfongetirileri": {"basarili": false, "hata": "timeout"},
+          "fintables": {"basarili": false, "hata": "rate_limit"},
+          "tefas": {"basarili": false, "hata": "5xx"}
+        }
+      },
+      "expected_output": {
+        "kullanilan_kaynak": null,
+        "veri_var": false,
+        "kullaniciya_oneriler": ["Pas geç (sepet aynı kalsın)", "Manuel veri girişi (kullanıcı kaynaklara baksın)"]
+      },
+      "rationale": "Sessiz tahmin yapma. Veri yoksa kullanıcıya açık ol, iki seçenek sun."
+    },
+    {
+      "id": 17,
+      "category": "error_recovery",
+      "name": "Oturum timeout — yarım kalmış değişiklik",
+      "input": {
+        "durum": "Yüzdeler girilmiş, henüz Tamam'a basılmamış. Sayfa Login.aspx'e atıldı.",
+        "yuzde_durumu": {"TVH": 13, "TBJ": 13, "GCN": 12, "YZD": 12, "FFC": 10, "ENF": 10, "VES": 20, "VGA": 10}
+      },
+      "expected_output": {
+        "current_basket_yazilmali_mi": false,
+        "kullaniciya_mesaj_iceriyor": ["Oturum kapandı", "Sözleşme No", "Yüzdeler", "Tekrar login"],
+        "memory_state_korunmali": true
+      },
+      "rationale": "Yarım kalmış değişiklik current_basket'e yazılmaz (gerçekleşme onayı yok). Yüzdeler geçici state'te tutulur, kullanıcı tekrar login olunca devam edilir."
+    },
+    {
+      "id": 18,
+      "category": "error_recovery",
+      "name": "Validator yüzdeleri tutmazsa ikinci pas",
+      "input": {
+        "ilk_pas_sonucu": {"TVH": 0, "TBJ": 13, "GCN": 12, "YZD": 0, "FFC": 10, "ENF": 10, "VES": 20, "VGA": 10},
+        "hedef": {"TVH": 13, "TBJ": 13, "GCN": 12, "YZD": 12, "FFC": 10, "ENF": 10, "VES": 20, "VGA": 10}
+      },
+      "expected_output": {
+        "ikinci_pas_yapilmali": true,
+        "ikinci_pas_hedefi": ["TVH", "YZD"],
+        "ikinci_pas_sonrasi_dogrulama": "toplam == 100"
+      },
+      "rationale": "Türkiye Hayat'ta TVH ve YZD ilk pas'ta düşer, sadece bu satırlar yeniden girilir."
+    },
+    {
+      "id": 19,
+      "category": "memory_schema",
+      "name": "Profile.md doğum tarihi şeması",
+      "input": {
+        "kullanici_cevabi": "Doğum tarihim 15 Şubat 1994"
+      },
+      "expected_output": {
+        "yazilan_alanlar": {
+          "Doğum tarihi": "1985-01-01",
+          "Yaş yazilmali_mi": false
+        },
+        "schema_version": 2
+      },
+      "rationale": "Yaş otomatik hesaplanan değer, profile.md'de saklanmaz. Doğum tarihi ISO formatında."
+    },
+    {
+      "id": 20,
+      "category": "memory_schema",
+      "name": "Current basket talep tarihi pay fiyatı zorunlu",
+      "input": {
+        "sepet_uygulandi": true,
+        "current_basket_yazilirken_pay_fiyatlari_eksik": true
+      },
+      "expected_output": {
+        "uyari_verilmeli": true,
+        "uyari_metni": "Talep tarihi pay fiyatları eksik. Bir sonraki revizede gerçek getiri hesabı için kritik. Atlama, eSube fon detayından veya TEFAS'tan oku.",
+        "current_basket_finalize": false
+      },
+      "rationale": "Pay fiyatları eksikse current_basket finalize edilmemeli. Self-feedback loop için zorunlu veri."
+    }
+  ],
+  "test_runner_notes": [
+    "Bu eval dosyası iki tür test içerir:",
+    "(a) trigger testleri (id 1-5): kullanıcı promptu → skill doğru moda girer mi?",
+    "(b) unit testler (id 6-20): skill içindeki sayısal/karar mantığı doğru mu?",
+    "Unit testler için skill'in mantık fonksiyonlarına (risk profili hesabı, override kontrolü, stabilite cezası) doğrudan input verilip çıktı kontrol edilebilir.",
+    "Trigger testleri için skill'in kabuk davranışı (mod seçimi, kaynak referansı) gözlenir.",
+    "Tüm test ID'leri benzersiz ve schema_version 2 ile uyumlu."
+  ]
+}

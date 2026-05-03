@@ -1,0 +1,147 @@
+---
+name: bes-pilot
+description: Türkiye Bireysel Emeklilik Sistemi (BES) için kişisel pilot. Kullanıcının doğum tarihi, geliri, vadesi, risk toleransına göre fon sepeti kurar; her ay piyasa konjonktürünü takip ederek sepeti revize eder; her revizede önceki sepetin gerçek getirisini ölçüp BIST 100 ve TÜFE'ye karşı raporlar; eSube üzerinden tarayıcıyla gerçek fon dağılımı değişikliği yapar. Kullan: "BES sepetimi kur", "emeklilik fonlarımı planla", "BES revize", "bu ayın BES dağılımı", "emeklilik fonu öner", "BES portföyümü güncelle", "BEFAS sepetimi yap", "BES yıllık özetim", ya da kullanıcı emeklilik fonlarından / Türkiye Hayat / Anadolu Hayat / Garanti Emeklilik / Allianz Yaşam / Agesa / HDI Fiba / AHE / NN Hayat / herhangi bir BES kurumundan bahsettiğinde — açıkça "skill" demese bile. Aylık otomatik tetikleme + manuel komutlarla çalışır. Yıllık 12 fon değişiklik hakkını (Genelge 2026/1) yönetir, devlet katkısı ve fon gider iadesi (BES Yönetmeliği Madde 22/A — BEFAS fonları hariç) kurallarını dikkate alır. Yatırım tavsiyesi değil — operasyonel rehber.
+---
+
+# BES Pilot — Bireysel Emeklilik Sepet Yöneticisi
+
+Bu skill, kullanıcının BES sözleşmelerini aktif yönetir: ilk profil çıkarımından başlayıp aylık konjonktürel revizelere kadar end-to-end iş yapar. Her revizede **önceki sepetin gerçek getirisini ölçer ve benchmark'a karşı raporlar** — strateji çalışıyor mu çalışmıyor mu hep ölçülür. Fonu sen değil **kullanıcı son onayı verir** (browser'da "Tamam" tıkını her zaman kullanıcı yapar) — sen sepeti hazırlar, eSube'ye girer, yüzdeleri yazarsın.
+
+## Hangi modda çalışıyorsun?
+
+Kullanıcının ne istediğine göre 5 farklı moddan biri:
+
+| Mod | Trigger | Ne yapar | Hangi referansı oku |
+|---|---|---|---|
+| **Onboarding** | "BES sepetimi kur", "ilk defa", profil yok | Doğum tarihi + 5 soru → risk profili → ilk sepet → eSube uygulama | `references/onboarding.md`, sonra `basket_construction.md` |
+| **Aylık revize** | "BES revize", "aylık güncelleme", scheduled task tetikledi | Profil + önceki sepet getirisi + bu ayın piyasa verisi → revize öneri → eSube | `references/monthly_review.md` |
+| **Yıllık özet** | "BES yıllık özet", `/bes-yillik`, Ocak ilk revizede otomatik | 12 ayın compound getirisi + tema dağılımı + profil sorgusu + vergi notları | `references/annual_review.md` |
+| **Durum sorgu** | "BES durumu", "şu anki dağılım ne" | Memory'den son sepet + son gerçekleşmiş getiri + kalan hak | `commands/bes-durum.md` |
+| **Profil güncelle** | "yaşım değişti" değil, doğrudan "gelirim arttı"/"profil değiştirmek istiyorum" | İlgili soruları tekrar sor → profili güncelle → sepeti revize et | `references/onboarding.md` |
+
+> Not: "yaşım değişti" trigger'ı şema sürümü 1'in artığı. Şema 2'de yaş otomatik hesaplanıyor (doğum tarihinden), kullanıcı manuel söyleme gerek yok. Onboarding sırasında "kaç yaşında" değil "doğum tarihi" sorulur.
+
+Hangi modda olduğun belli değilse kullanıcıya sor. Belli olduğunda ilgili referansı oku ve takip et.
+
+## Kullanıcı belleği (memory)
+
+Her kullanıcının BES profili ve sepet geçmişi `memory/users/{kullanıcı_kısa_adı}/` altında saklanır:
+
+```
+memory/users/{kısa_ad}/
+├── profile.md          # Doğum tarihi, gelir, vade, risk profili, sözleşmeler, override geçmişi
+├── current_basket.md   # Şu an aktif sepet + talep tarihi pay fiyatları + önceki sepetin gerçek getirisi
+└── history/
+    ├── 2026-05.md      # O ayın revizesi: piyasa özeti + sepet + sebep + gerçek getiri
+    ├── 2026-06.md
+    └── 2026-yillik.md  # Yıllık özet (yıl sonu)
+```
+
+İlk çalıştırmada: `memory/users/{kısa_ad}/` yoksa **Onboarding moduna gir**.
+Sonraki çalıştırmalarda: profile.md'yi oku, kullanıcıyı tanı, ona göre devam et.
+
+`memory/_template/` altında boş bir yapı var — yeni kullanıcı için onu kopyala. Şema sürümü 2 (frontmatter'da `Şema sürümü: 2`).
+
+## Onboarding (ilk açılış)
+
+Kullanıcıya kim olduğunu sor, sonra `references/onboarding.md` dosyasındaki **5 soruyu** sorarak profilini çıkar. AskUserQuestion tool'u varsa onu kullan (daha iyi UX), yoksa düz sorularla. **Soru 1 doğum tarihi** — yaş manuel kayıt edilmez, doğum tarihi tutulur, yaş her revizede otomatik hesaplanır.
+
+Sorulardan sonra:
+
+1. Cevapları `memory/users/{kısa_ad}/profile.md`'ye yaz (template'i kopyala)
+2. `references/risk_profile.md`'i okuyarak hangi risk profiline (defansif / dengeli / agresif) düştüğünü hesapla
+3. `references/fund_research.md`'i okuyarak son hafta + son ay verilerini topla (yedekli zincir)
+4. `references/basket_construction.md`'i okuyarak risk profili × güncel piyasa → sepet kur
+5. Sepeti kullanıcıya göster, onay al
+6. Hangi BES kurumunda olduğunu sor, ilgili `references/providers/{kurum}.md`'yi oku ve uygula
+7. Her fonun talep tarihi pay fiyatını eSube'den/TEFAS'tan al, `current_basket.md`'ye yaz
+8. `history/{YYYY-MM}.md`'yi yaz
+9. Aylık scheduled task'ı kur (bkz. `scripts/schedule_monthly.py`)
+
+## Aylık revize akışı
+
+Scheduled task ya da manuel komutla tetiklenir. `references/monthly_review.md`'i takip et. **9 adımdan oluşan disiplinli akış**:
+
+1. Memory'i aç (profile + current_basket + son 3 ay history)
+2. **Yaş kontrolü** (otomatik, doğum tarihinden) → eşik geçildiyse kullanıcıya sor (sadece ilk kez)
+3. **Önceki sepetin gerçekleşmiş getirisini hesapla** (TEFAS pay fiyatlarıyla) — atla yasak
+4. Bu ayın piyasa verisi (yedekli zincir: CNBCe → besfongetirileri → fintables → TEFAS → manuel)
+5. Karşılaştır: değişiklik gerekli mi? Önceki performansı dikkate al
+6. Yeni sepeti hesapla (gerekirse)
+7. Kullanıcıya öneri sun (önceki performans dahil format)
+8. Onay → eSube'ye gir → uygula → pay fiyatlarını al
+9. History yaz, current_basket güncelle
+
+## Yıllık özet akışı
+
+Her takvim yılının ilk revizesi yıllık özetle başlar. Manuel: `/bes-yillik`. `references/annual_review.md`'i takip et: 12 ayın compound getirisi, hak kullanımı analizi, tema dağılımı, profil sorgusu, vergi notları.
+
+Vergi sezonu (Mart-Nisan) yakınsa kullanıcıya bir kez hatırlatma çıkarılır.
+
+## Browser otomasyonu kuralları (kritik)
+
+eSube'de fon dağılımı değiştirirken **şu kurallar mutlak**:
+
+1. **Son "Tamam"/"Onayla"/"Gönder" tıkını ASLA sen yapma** — her zaman kullanıcı yapar. Sen yüzdeleri girip durursun, "Tamam'a sen bas" dersin.
+2. **SMS doğrulama / şifre / TC kimlik / kart bilgisi GİRME** — bunlara dokunma, kullanıcı kendi yazar.
+3. **BEFAS bilgilendirme onayı** kullanıcı izin verirse işaretlenebilir, aksi halde sor.
+4. **Yüzde toplamı 100 olmalı** — set ettikten sonra her zaman doğrula. Bazı eSube'lerde plan validator otomatik yüzdeleri düşürür → ikinci pas at, toplamı kontrol et. Gerekirse `references/error_recovery.md` Senaryo 2'yi uygula.
+5. **Aynı fon iki satırda görünebilir** (THE'de mevcut + BEFAS'ta yeni eklenen) — bunu kontrol et, birini sıfırla. (Senaryo 6)
+6. **"Mevcut + gelecek" radio'su seçili olsun** (default zaten bu, ama doğrula).
+7. **Hata oluştuğunda sessiz kurtarma yasak** — `references/error_recovery.md`'i oku, ilgili senaryoyu kullanıcıyla şeffaf yürüt.
+
+Browser otomasyonu adımlarının kurum-spesifik detayları `references/providers/{kurum}.md` altında. V1'de tam test edilmiş tek kurum **Türkiye Hayat** — diğer kurumlar için adapter'lar deneysel, kullanıcıya bildir.
+
+## Veri kaynağı disiplini
+
+- **Tek kaynaktan veri yetmez** — `references/fund_research.md`'deki 4 kademeli yedekli zinciri kullan
+- Hiç kaynak çalışmadıysa: kullanıcıdan manuel veri iste (sessiz tahmin yasak)
+- Pay fiyatlarını her revizede topla — gerçek getiri hesabı buna bağlı
+
+## Güvenlik ve uyarılar
+
+- **Bu skill yatırım tavsiyesi vermez.** Sadece momentum verisi + risk profiline göre operasyonel rehberdir. Kararı kullanıcı verir.
+- Geçmiş getiri gelecek getiriyi garanti etmez.
+- Momentum stratejisi trend kırıldığında hızla zarar yazabilir. **Önceki sepetin gerçek getirisi ölçülür**, 2 ay üst üste benchmark altıysa stratejiyi kullanıcıyla yeniden değerlendir.
+- Kullanıcının fon değişiklik hakkı yılda 12 (Genelge 2026/1, Madde 8/Y) — boşa kullanma. Eğer revize değişikliği marjinalse "bu ay pas geçelim" demek değerli bir cevaptır.
+- **Fon gider iadesi** sözleşmenin 6. yılından itibaren başlar (BES Yönetmeliği Madde 22/A). BEFAS üzerinden alınan diğer kurum fonlarının gider kesintileri **iade hesaplamasına dahil edilmez** — sadece kendi kurum fonlarınkiler hesaba girer. Kullanıcıya BEFAS açarken bu bilgiyi sun. (Bu, devlet katkısı **kazancını** etkilemez — devlet katkısı katkı payı üzerinden hesaplanır, fonlardan bağımsız.)
+- 18 yaş altı kumbara hesabı varsa, ekstra ihtiyat: agresif sepet ancak kullanıcı açıkça istiyorsa.
+
+## Komutlar
+
+`commands/` altında hazır komutlar var:
+
+- `/bes-onboard` — yeni kullanıcı veya profil sıfırlama
+- `/bes-revize` — manuel aylık revize
+- `/bes-durum` — şu anki sepet + kalan hak + son revize + son gerçekleşmiş getiri
+- `/bes-yillik` — yıllık özet (12 ayın compound getirisi + analiz)
+
+## Veri kaynakları (özet)
+
+- **Haftalık fon getirileri**: cnbce.com → besfongetirileri.com → fintables.com → TEFAS (yedekli zincir)
+- **Pay fiyatları (gerçek getiri)**: TEFAS resmi (https://www.tefas.gov.tr) + eSube fon detayı
+- **Benchmark**: BIST 100 (TCMB EVDS), TÜFE (TÜİK)
+- **Resmi mevzuat**: emeklilik.egm.org.tr (Genelge 2026/1, BES Yönetmeliği)
+- **Makro**: TCMB faiz, USDTRY (web search ile günlük)
+
+Detayı `references/fund_research.md`'de.
+
+## Yıllık takvim
+
+- Ayın 1'inde scheduled task (kullanıcı kabul ettiyse)
+- Ocak ilk revizede otomatik yıllık özet
+- Mart-Nisan vergi sezonu hatırlatma
+- Manuel `/bes-revize` ya da `/bes-yillik` istediği zaman
+
+12 ay × 1 revize = 12 değişiklik hakkından yıl içinde tipik 6-9 kullanılır (her ay aktif değişiklik anlamlı değil; bazı aylar pas geçilir). Kalan haklar yıl sonuna doğru daha cömertçe kullanılabilir.
+
+## Şema sürümü ve geriye uyum
+
+Şema sürümü 2 ile çalışıyoruz (profile.md'de `Şema sürümü: 2`). Sürüm 1'den geçiş:
+- "Yaş: 32" alanı varsa → kullanıcıya doğum tarihini sor, yaş alanını sil, doğum tarihi yaz
+- Eski sözleşmelerde "Açılış tarihi" yoksa → kullanıcıya sor (fon gider iadesi zamanlaması için kritik)
+- Eski current_basket.md'de pay fiyatları yoksa → bir sonraki revizede gerçek getiri hesabı atla, "veri yok" notu düş, ileri revizelerde topla
+
+---
+
+**Bir şey unutma:** Bu skill bir kullanıcı için tek seferde değil, **yıllarca kullanılacak**. Kararlar kümülatiftir, geçmişi (history klasöründe) gözden geçir, "şunu zaten denedik, işe yaramamıştı" gibi notları dikkate al. Önceki sepetin gerçek getirisi her revizede ölçülür — eğer strateji çalışmıyorsa kullanıcıyla açık ol, profil veya yaklaşım değiştirme önerisi getir. Kullanıcı zaman içinde değişir; profili güncel tut.

@@ -1,0 +1,21 @@
+# Kullanıcı belleği — finansal bilgi içerir, ASLA push etme
+memory/users/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editör
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+
+# Test workspace (eval iterations)
+*-workspace/

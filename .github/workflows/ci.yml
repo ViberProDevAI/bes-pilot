@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Syntax + PII checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate Python scripts
+        run: |
+          python3 -m py_compile scripts/fetch_fund_returns.py
+          python3 -m py_compile scripts/schedule_monthly.py
+          echo "Python syntax OK"
+
+      - name: Validate evals.json
+        run: |
+          python3 -c "
+          import json
+          data = json.load(open('evals/evals.json'))
+          ids = [e['id'] for e in data['evals']]
+          assert len(ids) == len(set(ids)), 'Duplicate eval IDs'
+          assert data.get('schema_version') == 2, 'Unexpected schema_version'
+          print(f'evals.json OK: {len(ids)} test, {len(data[\"test_categories\"])} kategori')
+          "
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          python3 -c "
+          import re
+          with open('SKILL.md') as f:
+              content = f.read()
+          fm = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+          assert fm, 'SKILL.md frontmatter eksik'
+          assert 'name: bes-pilot' in fm.group(1), 'name field eksik'
+          assert 'description:' in fm.group(1), 'description field eksik'
+          print('SKILL.md frontmatter OK')
+          "
+
+      - name: PII pattern scan
+        run: |
+          set -e
+          if grep -rEn '\b[0-9]{11}\b' --include='*.md' --include='*.py' --include='*.json' .; then
+            echo "TC kimlik kalibi bulundu"
+            exit 1
+          fi
+          if grep -rEn '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' --include='*.md' --include='*.py' --include='*.json' .; then
+            echo "Email adresi bulundu"
+            exit 1
+          fi
+          if grep -rEn '\bTR[0-9]{2}\s?[0-9]' --include='*.md' --include='*.py' --include='*.json' .; then
+            echo "IBAN kalibi bulundu"
+            exit 1
+          fi
+          if grep -rn '+90' --include='*.md' --include='*.py' --include='*.json' .; then
+            echo "+90 telefon kodu bulundu"
+            exit 1
+          fi
+          echo "Basic PII tarama temiz"
+
+      - name: Cross-reference check
+        run: |
+          set -e
+          for ref in references/onboarding.md references/risk_profile.md references/fund_research.md references/basket_construction.md references/monthly_review.md references/annual_review.md references/error_recovery.md references/providers/turkiye_hayat.md references/providers/_stub_template.md commands/bes-onboard.md commands/bes-revize.md commands/bes-durum.md commands/bes-yillik.md memory/_template/profile.md memory/_template/current_basket.md memory/_template/history/_example.md scripts/fetch_fund_returns.py scripts/schedule_monthly.py evals/evals.json; do
+            if [ ! -f "$ref" ]; then
+              echo "Eksik dosya: $ref"
+              exit 1
+            fi
+          done
+          echo "Tum referansli dosyalar mevcut"
+
+      - name: memory/users/ check
+        run: |
+          if [ -d "memory/users" ] && [ -n "$(ls -A memory/users 2>/dev/null)" ]; then
+            echo "memory/users/ bos degil - gercek kullanici verisi sizmis olabilir"
+            exit 1
+          fi
+          echo "memory/users/ temiz"
