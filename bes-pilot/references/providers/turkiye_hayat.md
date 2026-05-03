@@ -6,6 +6,49 @@ Kurumsal site: https://www.turkiyehayatemeklilik.com.tr/
 
 **Bu adapter Mayıs 2026'da gerçek bir kullanıcının hesabında test edilerek çalıştırıldı.**
 
+## 🚨 OTOMASYON ZİNCİRİ — KESİNTİSİZ İLERLE
+
+Sepet kullanıcı tarafından onaylandı (`basket_construction.md` Adım 7'de "Onayla, eSube'ye gir ve uygula" seçildi). Şu noktadan itibaren **durmadan** ilerle:
+
+### Önerilen browser MCP
+
+- Birinci tercih: **Claude in Chrome** (`mcp__Claude_in_Chrome__*`) — DOM tabanlı, hızlı, güvenilir
+- Yoksa: **computer-use** (`mcp__computer-use__*`) — pixel tabanlı, yavaş ama her sitede çalışır
+- Hiçbiri yoksa: kullanıcıya bildir, **manuel moda düş** (sepet tablosunu ver, "elle uygula" de)
+
+### Adım dizisi (her biri otomatik, sadece 4 ve 12'de kullanıcı duruyor)
+
+```
+1. Browser MCP ile https://esube.turkiyehayatemeklilik.com.tr/Views/Login.aspx aç
+2. AskUserQuestion ile bekle: "Login sayfası açıldı. Kullanıcı bilgilerini girip giriş yapınca 'Girdim' de."
+3. Kullanıcı "Girdim" dedi → AnaSayfa.aspx geldi mi kontrol et (DOM/screenshot)
+4. Sözleşme listesi var → birinci sözleşmeye tıkla (DOM click veya pixel click)
+5. /Views/BireyselEmeklilik.aspx → "İşlemlerim" sekmesine tıkla
+6. Sol menüden "Fon Dağılım Değişikliği" → /Views/BireyselEmeklilik-Islemlerim-FonDagilimDegisikligi.aspx
+7. "Devam eden işlem" uyarısı kontrolü (DOM içinde aranıyor) → varsa kullanıcıya bildir, dur
+8. Yeni Fon Dağılımı Talebim radio default = "Mevcut + Gelecek" — doğrula
+9. BEFAS gerekli mi? (sepetteki fonların tümü kendi kurum fonu mu, yoksa diğer kurucular var mı?)
+   - Gerekliyse: Adım 9a-9d sırayla
+   - Gereksizse: Adım 10'a atla
+9a. "BEFAS Fonları İçin Tıklayınız" linkine tıkla
+9b. BEFAS bilgilendirme modal'ı aç → kullanıcı izniyle checkbox işaretle (önce sor) → "Tamam"
+9c. Kurum çoklu seçim multi-select: sepetteki diğer kurucu kodlarını (AHS, GEM, FBH, vs.) seç
+9d. Fon checkbox'larını işaretle (sepetteki fon kodları), "Fon Ekle" butonuna tıkla → ana sayfaya dön
+10. Yüzdeleri JS ile gir (IonRangeSlider widget'ı, aşağıda kod)
+11. Toplam = 100 doğrulama
+    - Değilse: ikinci pas at (eksik kalan satırları yeniden yaz)
+    - Hala değilse: üçüncü pas (tek tek satır, 200ms ara)
+    - Hala değilse: kullanıcıya manuel devir, hangi fonun hangi yüzdeye gelmediğini söyle
+12. AskUserQuestion: "Sepet hazır, toplam %100. Sayfanın altındaki 'Tamam' butonuna SEN bas. SMS doğrulamayı kendin onaylayacaksın. Bittiğinde 'Bastım' de."
+13. Kullanıcı "Bastım" dedi → "Talep alındı" mesajını DOM'da kontrol et
+14. Pay fiyatlarını çek (her fon için /Views/BireyselEmeklilik-FonBilgileri.aspx?fonkod={KOD}) → current_basket.md'ye yaz
+15. history/{YYYY-MM}.md yaz, current_basket.md'yi finalize et
+16. Çoklu sözleşme varsa: ana sayfaya dön, ikinci sözleşme için Adım 4'ten tekrarla
+17. Bittiğinde scheduled task öner (kullanıcı kabul ederse `scripts/schedule_monthly.py`)
+```
+
+Bu zincirde Adım 2, 9b (BEFAS izni), 12 dışında **AskUserQuestion sorma** — durup beklemek yerine ilerle.
+
 ## Login akışı
 
 1. Ana sitede sağ üstte **"Online İşlemler"** butonuna tıkla

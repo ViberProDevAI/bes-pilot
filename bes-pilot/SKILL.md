@@ -52,6 +52,64 @@ Bu kontrol skip edilirse skill yarım kalır. Açıkça konuş.
 
 Bu 4 katman atlanırsa skill çalışmamış demektir, sadece "profil al + genel tavsiye" şeklinde yüzeysel taklit yapılmıştır.
 
+### E. AKIŞ OMURGASI — KESINTISIZ İLERLE, ARA CHECKPOINT'LERDE DURMA
+
+Bu skill **wizard tarzı** çalışır: kullanıcı ilk sorguyu yazdıktan sonra ekrana **AskUserQuestion** çoktan-seçmeli sorular düşer, kullanıcı seçim yapar, **sen ilerlemeye devam edersin**. "Devam edeyim mi?" gibi gereksiz checkpoint sorma — sadece **dönüm noktalarında** (sepet onayı, eSube'ye gitmeden önce, "Tamam"a basmadan önce) onay al.
+
+#### Soru disiplini
+
+| Kural | Açıklama |
+|---|---|
+| **AskUserQuestion her soruda zorunlu** | "Yaşın kaç?" diye düz metin sorma. Tool çağır, çoktan seçmeli sun. |
+| **Çoktan seçmeli + binned ranges** | Aylık katkı için "ne kadar?" değil: "<1000 TL / 1-3K / 3-7K / 7-15K / 15K+" |
+| **AskUserQuestion yoksa** | Skill çalışmaz. Kullanıcıya açık ol: "AskUserQuestion tool yok, bu skill ile çoktan-seçmeli akış yapılamaz. Manuel sohbete döndüm — devam edeyim mi?" |
+| **Birden fazla soru tek seferde** | İlişkili 2-3 soruyu tek `AskUserQuestion` çağrısında batch olarak sor, kullanıcının clickleme adedini düşür |
+| **Ara onay yok** | Profil bitti → otomatik piyasa araştırması başlat. "Şimdi araştırma yapayım mı?" diye sorma. |
+
+#### Otomasyon zinciri (onboarding örneği)
+
+```
+1. Tool check (WebSearch + AskUserQuestion + Browser MCP)
+   ↓ (bir araç eksikse kullanıcıya bildir, eksiksiz çalışmaz)
+2. AskUserQuestion: kim için çalışıyoruz? (kısa_ad)
+   ↓
+3. AskUserQuestion: 5 profil sorusu (batch, çoktan seçmeli)
+   ↓
+4. (otomatik) Risk profili hesapla, profile.md yaz
+   ↓
+5. (otomatik) WebSearch ile bu haftanın lider fon kategorisi
+   ↓
+6. (otomatik) Sepet algoritması çalıştır, fon kodları + yüzdeler üret
+   ↓
+7. AskUserQuestion: sepet tablosu + onay seçenekleri
+   ↓ Onayladı
+8. (otomatik) eSube'ye git (browser MCP)
+   ↓
+9. Kullanıcının login olmasını bekle (sadece bu adımda dur)
+   ↓ "Login oldum"
+10. (otomatik) Fon Dağılım Değişikliği sayfasına git
+    ↓
+11. (otomatik) BEFAS aç, kurumları seç, fonları işaretle, yüzdeleri yaz
+    ↓
+12. (otomatik) Toplam=100 doğrula, validator hatası varsa kademeli pas
+    ↓
+13. (otomatik) Pay fiyatlarını al, current_basket.md doldur
+    ↓
+14. AskUserQuestion: "Sepet hazır. 'Tamam' butonuna SEN bas, sonra söyle." — bekle
+    ↓ "Bastım"
+15. (otomatik) history/{YYYY-MM}.md yaz, scheduled task öner
+```
+
+7 ve 14 dışındaki tüm adımlar **otomatik**. Kullanıcının sadece 5 profil sorusunu cevaplaması, sepeti onaylaması, login olması ve "Tamam"a basması gerekir. Geri kalan her şey skill tarafında.
+
+#### Browser otomasyonu için zorunlu davranış
+
+Sepet onaylandığında (Adım 7'de "Onayla" seçildi):
+
+1. **Mevcut browser MCP'lerden hangisi varsa onu kullan**: Claude in Chrome (`mcp__Claude_in_Chrome__*`) öncelik, yoksa computer-use (`mcp__computer-use__*`)
+2. **Hiçbiri yoksa**: kullanıcıya net söyle: "Browser MCP yüklü değil. Sepet hazır — tablomu kopyala, eSube'de elle uygula. Ya da Claude in Chrome'u kur ve tekrar başlayalım."
+3. **Browser var ise**: eSube login sayfasını AÇ, kullanıcı login olunca akışa devam et — durup "şimdi login ol" diyip beklemekten **fazlası yok**, kalan her adım otomatik.
+
 ---
 
 ## Genel bakış
