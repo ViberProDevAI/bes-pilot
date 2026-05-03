@@ -62,50 +62,53 @@ Manuel keşif komutu: `/bes-kurum-kesfet`
 
 ## Kurulum
 
-Bu repo bir **Claude Code plugin marketplace**'idir. Cowork (Claude Desktop) ve Claude Code (CLI) aynı plugin sistemini kullanır.
+> ⚠️ **Bu skill şu an sadece Claude Code (CLI) içinde test edilmiştir.** Cowork (Claude Desktop) tarafında skill keşfi sürümler arasında değişiyor — orada güvenilir şekilde çalışmıyor olabilir. Önerilen kullanım Claude Code.
 
-### Önerilen yol — Plugin marketplace üzerinden (3 saniye)
+### Claude Code (terminal) — önerilen
 
-Cowork veya Claude Code'da bir sohbette şu iki komutu çalıştır:
-
-```
-/plugin marketplace add ViberProDevAI/bes-pilot
-/plugin install bes-pilot
-```
-
-Cowork uygulamayı tekrar başlatmanı isteyebilir — yeniden açtıktan sonra `bes-pilot` skill listesinde görünür. Yeni bir sohbette **"BES sepetimi kur"** yazınca otomatik tetiklenir.
-
-### Manuel yol — Klasik skill kurulumu (gelişimi takip etmek istersen)
+Önkoşul: [Claude Code](https://claude.ai/code) yüklü olmalı (`claude` komutu çalışıyor).
 
 ```bash
+# 1. Repo'yu klonla
 git clone https://github.com/ViberProDevAI/bes-pilot.git ~/Projects/bes-pilot
+
+# 2. Claude Code skill dizinine bağla (sembolik link — git pull ile otomatik güncellenir)
 mkdir -p ~/.claude/skills
 ln -s ~/Projects/bes-pilot/bes-pilot ~/.claude/skills/bes-pilot
-# Cowork açıksa Cmd+Q ile tamamen çıkış + tekrar aç
 ```
 
-Plugin marketplace'i fork edip kendi versiyonunu çalıştırmak istersen `CONTRIBUTING.md`'deki PR akışını takip et.
+Test et:
+
+```bash
+claude "BES sepetimi kur"
+```
+
+Yanıtın **ilk satırında** `🎯 **bes-pilot v0.2.0** — {mod}` görüyorsan skill çalışıyor demektir. Görmüyorsan skill yüklenmemiş.
+
+### Düz kopya (link istemezsen)
+
+```bash
+git clone https://github.com/ViberProDevAI/bes-pilot.git
+mkdir -p ~/.claude/skills
+cp -r bes-pilot/bes-pilot ~/.claude/skills/bes-pilot
+```
 
 ### Güncelleme
 
-Plugin marketplace yolu:
-```
-/plugin update bes-pilot
-```
-
-Manuel yol:
 ```bash
 cd ~/Projects/bes-pilot && git pull
-# Symlink kullandıysan otomatik yansır; Cowork açıksa Cmd+Q + tekrar aç
+# Symlink kullandıysan otomatik yansır
 ```
 
-> **Önemli (Cowork)**: Plugin/skill keşfi uygulama başlangıcında yapılır. "Reset" / "yeni sohbet" yetmez — `Cmd+Q` ile tamamen çıkış + tekrar aç gerekir.
+### Cowork (Claude Desktop) — şu an sorunlu
+
+Cowork'ün skill loader'ı `~/.claude/skills/` altındaki user skill'leri her sürümde aynı şekilde yüklemiyor. Bes-pilot bu repo'da plugin marketplace formatında da hazır (`/plugin marketplace add ViberProDevAI/bes-pilot` + `/plugin install bes-pilot` komutlarıyla install edilmesi gerekiyor) ama bu komutlar bazı Cowork sürümlerinde tanınmıyor. Cowork desteği henüz **garantili değil** — şimdilik Claude Code üzerinden kullan, Cowork uyumu sürüm güncellendikçe iyileşecektir.
 
 ### Bağımlılıklar
 
 - Tarayıcı otomasyonu için **Claude in Chrome** uzantısı (önerilir) — eSube'de tıklama ve form doldurma için
-- Veri toplama için **WebSearch + WebFetch** araçları (Cowork'te varsayılan)
-- Aylık otomatik tetikleme için **scheduled-tasks MCP** (Cowork'te varsayılan, opsiyonel)
+- Veri toplama için **WebSearch + WebFetch** araçları (Claude Code'da varsayılan)
+- Aylık otomatik tetikleme için **scheduled-tasks MCP** (opsiyonel)
 
 ## Skill nasıl düşünür? (karar gerekçesi)
 
