@@ -64,47 +64,50 @@ Manuel keşif komutu: `/bes-kurum-kesfet`
 
 > Aşağıdaki komutlarda `OWNER/bes-pilot` kısmını **bu repo'nun gerçek GitHub adresi** ile değiştir (örn. `kullaniciadi/bes-pilot`).
 
-### Cowork (Claude Desktop) — macOS
+Hem **Cowork (Claude Desktop)** hem **Claude Code (CLI)** aynı skill dizinini kullanır: `~/.claude/skills/`. Tek kurulum, iki taraf da çalışır.
+
+### Hızlı kurulum (sembolik link — git pull ile otomatik güncellenir)
 
 ```bash
-# 1. Repo'yu klonla
+# 1. Repo'yu dev klasörüne klonla
 git clone https://github.com/OWNER/bes-pilot.git ~/Projects/bes-pilot
 
-# 2. Cowork skill dizinine kopyala (veya sembolik link)
-mkdir -p ~/Library/Application\ Support/Claude/skills
-cp -r ~/Projects/bes-pilot ~/Library/Application\ Support/Claude/skills/
+# 2. ~/.claude/skills/ altına sembolik link
+mkdir -p ~/.claude/skills
+ln -s ~/Projects/bes-pilot ~/.claude/skills/bes-pilot
 
-# 3. Cowork'ü (Claude Desktop) yeniden başlat
+# 3. Cowork açıksa: tamamen çıkış (Cmd+Q) + tekrar aç
+#    Claude Code: yeni oturum başlat
 ```
 
-Yeni sohbette **"BES sepetimi kur"** yazarak başla — skill otomatik tetiklenir.
-
-### Claude Code (CLI)
+### Düz kopya (link istemiyorsan)
 
 ```bash
-# 1. Repo'yu klonla
 git clone https://github.com/OWNER/bes-pilot.git
-
-# 2. ~/.claude/skills/ altına kopyala
 mkdir -p ~/.claude/skills
 cp -r bes-pilot ~/.claude/skills/
-
-# 3. Yeni bir oturumda komut tetikle
-claude "BES sepetimi kur"
 ```
+
+### Test
+
+Yeni sohbette **"BES sepetimi kur"** yaz veya `/bes-onboard` komutunu çalıştır — skill otomatik tetiklenir.
 
 ### Güncelleme
 
-Repo güncellendiğinde:
+Sembolik link kurulumu (önerilen):
 ```bash
 cd ~/Projects/bes-pilot && git pull
-# Cowork:
-cp -r ~/Projects/bes-pilot/* ~/Library/Application\ Support/Claude/skills/bes-pilot/
-# CLI:
+# Otomatik yansır, başka bir şey yapmaya gerek yok.
+# Cowork açıksa Cmd+Q + tekrar aç.
+```
+
+Düz kopya kurulumu:
+```bash
+cd ~/Projects/bes-pilot && git pull
 cp -r ~/Projects/bes-pilot/* ~/.claude/skills/bes-pilot/
 ```
 
-Sembolik linkle kurduysan `git pull` yeterli; ek kopya gerekmez.
+> **Önemli (Cowork)**: Skill listesini yenilemek için **Cmd+Q ile tamamen çıkış** yap, sonra tekrar aç. "Reset" / "yeni sohbet" yetmez, çünkü skill keşfi uygulama başlangıcında yapılır.
 
 ### Bağımlılıklar
 
