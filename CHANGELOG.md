@@ -6,6 +6,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/), versiyonlama: 
 
 ## [Unreleased]
 
+### Eklenen
+- **Yaşayan adapter keşif sistemi** (`references/adapter_discovery.md`): Stub kurumlarda kullanıcıyla ekran-ekran 10 adımlık keşif akışı; sonunda kalıcı adapter ve README güncellemesi
+- `commands/bes-kurum-kesfet.md`: Manuel keşif komutu
+- Yeni mod: **Kurum keşif** (SKILL.md'de 5 → 6 mod)
+- Adapter olgunluk seviyeleri: 🔴 Stub → 🟡 Keşif (`_draft.md`) → 🟢 Test edilmiş → ✅ Olgun
+- Yarım kalan keşif desteği: `_draft.md` korunur, sonraki kullanımda kaldığı yerden devam
+
+### Değişen
+- `references/providers/_stub_template.md`: Pasif şablondan aktif keşif iskeletine dönüştürüldü, frontmatter şeması eklendi
+- `commands/bes-onboard.md` + `bes-revize.md`: Stub kuruma rastlandığında otomatik keşif tetikleme
+- `SKILL.md`: 6. mod (Kurum keşif) eklendi, kurum kontrolü 3 yollu (var / draft / yok)
+
 ## [0.2.0] — 2026-05-03
 
 ### Eklenen

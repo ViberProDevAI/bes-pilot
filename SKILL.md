@@ -9,15 +9,16 @@ Bu skill, kullanıcının BES sözleşmelerini aktif yönetir: ilk profil çıka
 
 ## Hangi modda çalışıyorsun?
 
-Kullanıcının ne istediğine göre 5 farklı moddan biri:
+Kullanıcının ne istediğine göre 6 farklı moddan biri:
 
 | Mod | Trigger | Ne yapar | Hangi referansı oku |
 |---|---|---|---|
 | **Onboarding** | "BES sepetimi kur", "ilk defa", profil yok | Doğum tarihi + 5 soru → risk profili → ilk sepet → eSube uygulama | `references/onboarding.md`, sonra `basket_construction.md` |
 | **Aylık revize** | "BES revize", "aylık güncelleme", scheduled task tetikledi | Profil + önceki sepet getirisi + bu ayın piyasa verisi → revize öneri → eSube | `references/monthly_review.md` |
 | **Yıllık özet** | "BES yıllık özet", `/bes-yillik`, Ocak ilk revizede otomatik | 12 ayın compound getirisi + tema dağılımı + profil sorgusu + vergi notları | `references/annual_review.md` |
+| **Kurum keşif** | Kullanıcının kurumu stub (Türkiye Hayat dışı, adapter yok) veya `/bes-kurum-kesfet` | Ekran-ekran ilerleyip draft adapter oluştur, akış sonunda kalıcı `.md` ve README güncelleme | `references/adapter_discovery.md` |
 | **Durum sorgu** | "BES durumu", "şu anki dağılım ne" | Memory'den son sepet + son gerçekleşmiş getiri + kalan hak | `commands/bes-durum.md` |
-| **Profil güncelle** | "yaşım değişti" değil, doğrudan "gelirim arttı"/"profil değiştirmek istiyorum" | İlgili soruları tekrar sor → profili güncelle → sepeti revize et | `references/onboarding.md` |
+| **Profil güncelle** | "gelirim arttı" / "profil değiştirmek istiyorum" | İlgili soruları tekrar sor → profili güncelle → sepeti revize et | `references/onboarding.md` |
 
 > Not: "yaşım değişti" trigger'ı şema sürümü 1'in artığı. Şema 2'de yaş otomatik hesaplanıyor (doğum tarihinden), kullanıcı manuel söyleme gerek yok. Onboarding sırasında "kaç yaşında" değil "doğum tarihi" sorulur.
 
@@ -53,7 +54,10 @@ Sorulardan sonra:
 3. `references/fund_research.md`'i okuyarak son hafta + son ay verilerini topla (yedekli zincir)
 4. `references/basket_construction.md`'i okuyarak risk profili × güncel piyasa → sepet kur
 5. Sepeti kullanıcıya göster, onay al
-6. Hangi BES kurumunda olduğunu sor, ilgili `references/providers/{kurum}.md`'yi oku ve uygula
+6. **Kurum kontrolü** — `references/providers/{kurum}.md` var mı?
+   - **Var** (Türkiye Hayat, veya başka bir keşfi tamamlanmış kurum): adapter'ı oku, eSube'de uygula
+   - **`{kurum}_draft.md` var** (önceki keşif yarım kalmış): "kaldığımız yerden devam edelim mi?" sor → onaylarsa devam, reddederse manuel mod
+   - **Yok** (stub kurum): **Kurum keşif moduna gir** — `references/adapter_discovery.md`'i takip et, kullanıcıya iki seçenek sun (birlikte keşfet / bu sefer manuel)
 7. Her fonun talep tarihi pay fiyatını eSube'den/TEFAS'tan al, `current_basket.md`'ye yaz
 8. `history/{YYYY-MM}.md`'yi yaz
 9. Aylık scheduled task'ı kur (bkz. `scripts/schedule_monthly.py`)
@@ -77,6 +81,24 @@ Scheduled task ya da manuel komutla tetiklenir. `references/monthly_review.md`'i
 Her takvim yılının ilk revizesi yıllık özetle başlar. Manuel: `/bes-yillik`. `references/annual_review.md`'i takip et: 12 ayın compound getirisi, hak kullanımı analizi, tema dağılımı, profil sorgusu, vergi notları.
 
 Vergi sezonu (Mart-Nisan) yakınsa kullanıcıya bir kez hatırlatma çıkarılır.
+
+## Kurum keşif akışı (adapter yoksa)
+
+V1'de tam test edilmiş tek kurum **Türkiye Hayat ve Emeklilik**. Diğer 17 BES kurumu için adapter yok — ama skill **boş öneriyle bırakmaz**. Kullanıcı stub bir kurumdaysa:
+
+1. `references/adapter_discovery.md`'i oku — keşif sürecinin tam playbook'u orada
+2. Kullanıcıya net iki seçenek sun:
+   - **A) Birlikte keşfedelim**: 30-60 dk ekran-ekran, sonunda kalıcı adapter; sonraki kullanımlar otomatik
+   - **B) Bu sefer manuel**: skill önerisi verir, kullanıcı eSube'de elle uygular
+3. A seçildiyse `_stub_template.md`'i `references/providers/{kurum}_draft.md` olarak kopyala, frontmatter doldur (`adapter_durumu: KEŞİF`, `keşif_başlangıcı: {tarih}`)
+4. 10 adımlık keşif akışını yürüt: Login → Hesap yapısı → Fon dağılım menüsü → Sayfa yapısı → JS selector keşfi → BEFAS → Yüzde girme testi → Doğrulama → Hata sapmaları → Pay fiyatı çekme
+5. Her adımda drafte yaz; her ekranda kullanıcının gördüğünü teyit et
+6. Akış başarıyla tamamlandığında promosyon teklif et: `_draft.md` → `.md`, frontmatter `TEST EDİLMİŞ ✅`, README tablosu güncelleme
+7. Topluluğa katkı PR'ı önerisi (opsiyonel — `CONTRIBUTING.md` rehberi)
+
+Yarım kalan keşif `_draft.md` olarak kalır; bir sonraki kullanımda skill kullanıcıya "kaldığımız yerden devam edelim mi?" sorar (son tamamlanan adımı söyleyerek).
+
+**Mahremiyet**: Keşif sırasında kullanıcının ekranında sözleşme no/ad-soyad/birikim görünür ama drafte **yazılmaz** — sadece UI yapısı, akış, JS davranışı kayda geçer.
 
 ## Browser otomasyonu kuralları (kritik)
 

@@ -17,6 +17,7 @@ BES sözleşmenizi sizinle birlikte aktif yönetir: yaş, gelir, vade ve risk to
 - 💰 **Hak yönetimi**: Yıllık 12 fon değişiklik hakkını (Genelge 2026/1) kontrollü kullanır, gereksiz revizeden kaçınır
 - 🛡️ **Hata kurtarma**: eSube'de oturum kopması, validator hataları, BEFAS modal sorunları — hepsi için açık playbook (sessiz başarısızlık yok)
 - 🔁 **Yedekli veri kaynağı**: CNBCe → besfongetirileri → fintables → TEFAS → manuel — tek kaynak kırılırsa otomatik geçer
+- 🔍 **Yaşayan adapter keşfi**: Kurumunuzun adapter'ı yoksa skill sizinle birlikte ekran-ekran keşfeder, kalıcı adapter oluşturur — tek seferlik 30-60 dk yatırım, sonraki tüm aylar (ve sonraki tüm kullanıcılar için PR atarsanız) otomatik
 
 ## Desteklenen kurumlar (V1)
 
@@ -41,9 +42,23 @@ BES sözleşmenizi sizinle birlikte aktif yönetir: yaş, gelir, vade ve risk to
 | Vienna Life | 🟡 Stub |
 | Zurich Yaşam | 🟡 Stub |
 
-> Stub adapter, kullanıcıyla birlikte ekran-ekran ilerleyip o kurumun eSube akışını öğrenir ve **kullanım sonrası kalıcı adapter'ı oluşturur**. Bir sonraki ay/kullanıcı için otomatik çalışır.
->
-> Hangi kurumun adapter'ını yazıp PR atarsanız topluluğa katkı yapmış olursunuz!
+### Stub kurum nasıl çalışır?
+
+Türkiye Hayat dışındaki tüm kurumlar **stub** olarak işaretli — yani henüz tam test edilmemiş. Bu, "skill o kurumda çalışmaz" demek **değil**:
+
+1. Kullanıcı kurumunu söylediğinde, skill iki seçenek sunar:
+   - **Birlikte keşfedelim** (30-60 dk, ekran-ekran) → sonunda o kurum için **kalıcı adapter** üretilir, sonraki aylar otomatik çalışır. Detay: [`references/adapter_discovery.md`](references/adapter_discovery.md)
+   - **Bu sefer manuel** → skill öneri verir, kullanıcı eSube'de elle uygular
+2. Keşif tamamlandığında dosya `references/providers/{kurum}.md` olarak yazılır, README tablosu 🟡 → ✅ olur
+3. PR atılırsa **tüm topluluk** o kurum için otomatik adapter'a kavuşur — `CONTRIBUTING.md`'de PR rehberi
+
+**Adapter olgunluk seviyeleri**:
+- 🔴 Stub: hiç keşfedilmedi
+- 🟡 Keşif (`_draft.md`): aktif keşif sürüyor
+- 🟢 Test edilmiş: bir kez baştan sona çalıştı
+- ✅ Olgun: 3+ revize, 2+ kullanıcı doğrulaması
+
+Manuel keşif komutu: `/bes-kurum-kesfet`
 
 ## Kurulum
 
@@ -139,10 +154,13 @@ Claude: Mükemmel. Kayıt edildi. Bir sonraki revize: 1 Haziran.
 
 ```
 bes-pilot/
-├── SKILL.md                # Ana orchestration (5 mod)
+├── SKILL.md                # Ana orchestration (6 mod)
 ├── README.md               # Bu dosya
+├── CONTRIBUTING.md         # Topluluğa katkı + adapter PR rehberi
+├── CHANGELOG.md            # Sürüm geçmişi
 ├── LICENSE
 ├── .gitignore
+├── .github/workflows/ci.yml # Syntax + PII + cross-reference CI
 ├── references/             # İlgili modlarda yüklenen detaylı rehberler
 │   ├── onboarding.md           # Doğum tarihi + 5 soru
 │   ├── risk_profile.md         # Profil → temel allokasyon (kanıt + gerekçe)
@@ -151,14 +169,16 @@ bes-pilot/
 │   ├── monthly_review.md       # 9 adımlık aylık akış
 │   ├── annual_review.md        # Yıllık compound + tema dağılımı + vergi notları
 │   ├── error_recovery.md       # 9 senaryo hata kurtarma playbook
+│   ├── adapter_discovery.md    # Yeni kurum keşif akışı (10 adım)
 │   └── providers/
 │       ├── turkiye_hayat.md    # ✅ Tam test edilmiş + pay fiyatı çekme
-│       └── _stub_template.md   # 🟡 Diğer kurumlar için
+│       └── _stub_template.md   # 🟡 Keşif iskeleti
 ├── commands/
 │   ├── bes-onboard.md
 │   ├── bes-revize.md
 │   ├── bes-durum.md
-│   └── bes-yillik.md
+│   ├── bes-yillik.md
+│   └── bes-kurum-kesfet.md     # Manuel adapter keşfi
 ├── scripts/
 │   ├── schedule_monthly.py
 │   └── fetch_fund_returns.py   # Yedekli zincir + yapılandırılmış hata

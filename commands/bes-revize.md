@@ -18,8 +18,12 @@ BES Pilot skill'inin **monthly review** moduna gir.
 5. Karşılaştır → değişiklik gerekli mi? **Önceki sepet 2 ay üst üste benchmark altıysa stratejiyi sorgula.**
 6. Eğer gerekiyorsa `references/basket_construction.md` ile yeni sepeti hesapla
 7. Kullanıcıya öneriyle gel — formatına dikkat et (önceki performans + bu ayın önerisi)
-8. Onay → `references/providers/{kurum}.md` ile eSube'ye gir → uygula. Hata oluşursa `references/error_recovery.md` playbook'unu kullan.
-9. Yeni `history/{YYYY-MM}.md` yaz, `current_basket.md`'i güncelle (yeni sepet + yeni pay fiyatları)
+8. Onay → eSube'ye gir → uygula:
+   - `references/providers/{kurum}.md` varsa adapter'ı kullan
+   - `{kurum}_draft.md` varsa keşfe kaldığı yerden devam et (kullanıcıya hatırlat)
+   - **Hiçbiri yoksa** (stub kurum): `references/adapter_discovery.md`'i takip ederek kurum keşfini başlat (kullanıcıya iki seçenek sun)
+   - Hata oluşursa `references/error_recovery.md` playbook'unu kullan
+9. Yeni `history/{YYYY-MM}.md` yaz, `current_basket.md`'i güncelle (yeni sepet + yeni pay fiyatları). Keşif tamamlandıysa adapter'ı `_draft.md` → `.md` olarak promosyon yap, README tablosunu güncelle.
 
 Eğer profile.md yoksa onboarding'e yönlendir (`/bes-onboard`).
 

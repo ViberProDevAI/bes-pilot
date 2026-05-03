@@ -72,7 +72,7 @@ jobs:
       - name: Cross-reference check
         run: |
           set -e
-          for ref in references/onboarding.md references/risk_profile.md references/fund_research.md references/basket_construction.md references/monthly_review.md references/annual_review.md references/error_recovery.md references/providers/turkiye_hayat.md references/providers/_stub_template.md commands/bes-onboard.md commands/bes-revize.md commands/bes-durum.md commands/bes-yillik.md memory/_template/profile.md memory/_template/current_basket.md memory/_template/history/_example.md scripts/fetch_fund_returns.py scripts/schedule_monthly.py evals/evals.json; do
+          for ref in references/onboarding.md references/risk_profile.md references/fund_research.md references/basket_construction.md references/monthly_review.md references/annual_review.md references/error_recovery.md references/adapter_discovery.md references/providers/turkiye_hayat.md references/providers/_stub_template.md commands/bes-onboard.md commands/bes-revize.md commands/bes-durum.md commands/bes-yillik.md commands/bes-kurum-kesfet.md memory/_template/profile.md memory/_template/current_basket.md memory/_template/history/_example.md scripts/fetch_fund_returns.py scripts/schedule_monthly.py evals/evals.json; do
             if [ ! -f "$ref" ]; then
               echo "Eksik dosya: $ref"
               exit 1
