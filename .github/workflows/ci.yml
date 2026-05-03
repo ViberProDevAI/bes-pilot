@@ -20,15 +20,15 @@ jobs:
 
       - name: Validate Python scripts
         run: |
-          python3 -m py_compile scripts/fetch_fund_returns.py
-          python3 -m py_compile scripts/schedule_monthly.py
+          python3 -m py_compile bes-pilot/scripts/fetch_fund_returns.py
+          python3 -m py_compile bes-pilot/scripts/schedule_monthly.py
           echo "Python syntax OK"
 
       - name: Validate evals.json
         run: |
           python3 -c "
           import json
-          data = json.load(open('evals/evals.json'))
+          data = json.load(open('bes-pilot/evals/evals.json'))
           ids = [e['id'] for e in data['evals']]
           assert len(ids) == len(set(ids)), 'Duplicate eval IDs'
           assert data.get('schema_version') == 2, 'Unexpected schema_version'
@@ -39,7 +39,7 @@ jobs:
         run: |
           python3 -c "
           import re
-          with open('SKILL.md') as f:
+          with open('bes-pilot/SKILL.md') as f:
               content = f.read()
           fm = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
           assert fm, 'SKILL.md frontmatter eksik'
@@ -72,7 +72,7 @@ jobs:
       - name: Cross-reference check
         run: |
           set -e
-          for ref in references/onboarding.md references/risk_profile.md references/fund_research.md references/basket_construction.md references/monthly_review.md references/annual_review.md references/error_recovery.md references/adapter_discovery.md references/providers/turkiye_hayat.md references/providers/_stub_template.md commands/bes-onboard.md commands/bes-revize.md commands/bes-durum.md commands/bes-yillik.md commands/bes-kurum-kesfet.md memory/_template/profile.md memory/_template/current_basket.md memory/_template/history/_example.md scripts/fetch_fund_returns.py scripts/schedule_monthly.py evals/evals.json; do
+          for ref in bes-pilot/references/onboarding.md bes-pilot/references/risk_profile.md bes-pilot/references/fund_research.md bes-pilot/references/basket_construction.md bes-pilot/references/monthly_review.md bes-pilot/references/annual_review.md bes-pilot/references/error_recovery.md bes-pilot/references/adapter_discovery.md bes-pilot/references/providers/turkiye_hayat.md bes-pilot/references/providers/_stub_template.md bes-pilot/commands/bes-onboard.md bes-pilot/commands/bes-revize.md bes-pilot/commands/bes-durum.md bes-pilot/commands/bes-yillik.md bes-pilot/commands/bes-kurum-kesfet.md bes-pilot/memory/_template/profile.md bes-pilot/memory/_template/current_basket.md bes-pilot/memory/_template/history/_example.md bes-pilot/scripts/fetch_fund_returns.py bes-pilot/scripts/schedule_monthly.py bes-pilot/evals/evals.json; do
             if [ ! -f "$ref" ]; then
               echo "Eksik dosya: $ref"
               exit 1
@@ -80,10 +80,10 @@ jobs:
           done
           echo "Tum referansli dosyalar mevcut"
 
-      - name: memory/users/ check
+      - name: bes-pilot/memory/users/ check
         run: |
-          if [ -d "memory/users" ] && [ -n "$(ls -A memory/users 2>/dev/null)" ]; then
-            echo "memory/users/ bos degil - gercek kullanici verisi sizmis olabilir"
+          if [ -d "bes-pilot/memory/users" ] && [ -n "$(ls -A bes-pilot/memory/users 2>/dev/null)" ]; then
+            echo "bes-pilot/memory/users/ bos degil - gercek kullanici verisi sizmis olabilir"
             exit 1
           fi
-          echo "memory/users/ temiz"
+          echo "bes-pilot/memory/users/ temiz"

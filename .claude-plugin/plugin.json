@@ -1,0 +1,29 @@
+{
+  "name": "bes-pilot",
+  "version": "0.2.0",
+  "description": "Türkiye Bireysel Emeklilik Sistemi (BES) için kişisel pilot. Risk profili çıkarır, aylık fon sepeti revize eder, eSube üzerinden tarayıcıyla uygular, her revizede önceki sepetin gerçek getirisini BIST 100 ve TÜFE'ye karşı ölçer, yıllık compound özet sunar. Yatırım tavsiyesi değil — operasyonel rehber.",
+  "author": {
+    "name": "ViberProDevAI"
+  },
+  "repository": "https://github.com/ViberProDevAI/bes-pilot",
+  "license": "MIT",
+  "keywords": [
+    "bes",
+    "bireysel-emeklilik",
+    "emeklilik",
+    "turkey",
+    "turkiye",
+    "finance",
+    "retirement",
+    "retirement-planning",
+    "fon-yonetimi",
+    "fund-management",
+    "esube",
+    "turkiye-hayat",
+    "befas",
+    "tefas"
+  ],
+  "skills": [
+    "./bes-pilot"
+  ]
+}

@@ -62,52 +62,44 @@ Manuel keşif komutu: `/bes-kurum-kesfet`
 
 ## Kurulum
 
-> Aşağıdaki komutlarda `OWNER/bes-pilot` kısmını **bu repo'nun gerçek GitHub adresi** ile değiştir (örn. `kullaniciadi/bes-pilot`).
+Bu repo bir **Claude Code plugin marketplace**'idir. Cowork (Claude Desktop) ve Claude Code (CLI) aynı plugin sistemini kullanır.
 
-Hem **Cowork (Claude Desktop)** hem **Claude Code (CLI)** aynı skill dizinini kullanır: `~/.claude/skills/`. Tek kurulum, iki taraf da çalışır.
+### Önerilen yol — Plugin marketplace üzerinden (3 saniye)
 
-### Hızlı kurulum (sembolik link — git pull ile otomatik güncellenir)
+Cowork veya Claude Code'da bir sohbette şu iki komutu çalıştır:
 
-```bash
-# 1. Repo'yu dev klasörüne klonla
-git clone https://github.com/OWNER/bes-pilot.git ~/Projects/bes-pilot
-
-# 2. ~/.claude/skills/ altına sembolik link
-mkdir -p ~/.claude/skills
-ln -s ~/Projects/bes-pilot ~/.claude/skills/bes-pilot
-
-# 3. Cowork açıksa: tamamen çıkış (Cmd+Q) + tekrar aç
-#    Claude Code: yeni oturum başlat
+```
+/plugin marketplace add ViberProDevAI/bes-pilot
+/plugin install bes-pilot
 ```
 
-### Düz kopya (link istemiyorsan)
+Cowork uygulamayı tekrar başlatmanı isteyebilir — yeniden açtıktan sonra `bes-pilot` skill listesinde görünür. Yeni bir sohbette **"BES sepetimi kur"** yazınca otomatik tetiklenir.
+
+### Manuel yol — Klasik skill kurulumu (gelişimi takip etmek istersen)
 
 ```bash
-git clone https://github.com/OWNER/bes-pilot.git
+git clone https://github.com/ViberProDevAI/bes-pilot.git ~/Projects/bes-pilot
 mkdir -p ~/.claude/skills
-cp -r bes-pilot ~/.claude/skills/
+ln -s ~/Projects/bes-pilot/bes-pilot ~/.claude/skills/bes-pilot
+# Cowork açıksa Cmd+Q ile tamamen çıkış + tekrar aç
 ```
 
-### Test
-
-Yeni sohbette **"BES sepetimi kur"** yaz veya `/bes-onboard` komutunu çalıştır — skill otomatik tetiklenir.
+Plugin marketplace'i fork edip kendi versiyonunu çalıştırmak istersen `CONTRIBUTING.md`'deki PR akışını takip et.
 
 ### Güncelleme
 
-Sembolik link kurulumu (önerilen):
-```bash
-cd ~/Projects/bes-pilot && git pull
-# Otomatik yansır, başka bir şey yapmaya gerek yok.
-# Cowork açıksa Cmd+Q + tekrar aç.
+Plugin marketplace yolu:
+```
+/plugin update bes-pilot
 ```
 
-Düz kopya kurulumu:
+Manuel yol:
 ```bash
 cd ~/Projects/bes-pilot && git pull
-cp -r ~/Projects/bes-pilot/* ~/.claude/skills/bes-pilot/
+# Symlink kullandıysan otomatik yansır; Cowork açıksa Cmd+Q + tekrar aç
 ```
 
-> **Önemli (Cowork)**: Skill listesini yenilemek için **Cmd+Q ile tamamen çıkış** yap, sonra tekrar aç. "Reset" / "yeni sohbet" yetmez, çünkü skill keşfi uygulama başlangıcında yapılır.
+> **Önemli (Cowork)**: Plugin/skill keşfi uygulama başlangıcında yapılır. "Reset" / "yeni sohbet" yetmez — `Cmd+Q` ile tamamen çıkış + tekrar aç gerekir.
 
 ### Bağımlılıklar
 
@@ -285,42 +277,48 @@ Claude: Önceki sepetinin gerçek getirisi (33 gün):
 
 ## Mimari
 
+Repo, Claude Code plugin marketplace formatındadır:
+
 ```
-bes-pilot/
-├── SKILL.md                # Ana orchestration (6 mod)
-├── README.md               # Bu dosya
-├── CONTRIBUTING.md         # Topluluğa katkı + adapter PR rehberi
-├── CHANGELOG.md            # Sürüm geçmişi
+bes-pilot/                          # repo root (marketplace)
+├── .claude-plugin/
+│   ├── marketplace.json            # Marketplace tanımı (plugin listesi)
+│   └── plugin.json                 # Plugin metadata
+├── bes-pilot/                      # Plugin içeriği (skill kendisi)
+│   ├── SKILL.md                    # Ana orchestration (6 mod)
+│   ├── references/                 # İlgili modlarda yüklenen rehberler
+│   │   ├── onboarding.md           # Doğum tarihi + 5 soru
+│   │   ├── risk_profile.md         # Profil → temel allokasyon (kanıt + gerekçe)
+│   │   ├── fund_research.md        # 4 kademeli yedekli veri zinciri
+│   │   ├── basket_construction.md  # Sepet algoritması + performans geri besleme
+│   │   ├── monthly_review.md       # 9 adımlık aylık akış
+│   │   ├── annual_review.md        # Yıllık compound + tema dağılımı + vergi notları
+│   │   ├── error_recovery.md       # 9 senaryo hata kurtarma playbook
+│   │   ├── adapter_discovery.md    # Yeni kurum keşif akışı (10 adım)
+│   │   └── providers/
+│   │       ├── turkiye_hayat.md    # ✅ Tam test edilmiş + pay fiyatı çekme
+│   │       └── _stub_template.md   # 🟡 Keşif iskeleti
+│   ├── commands/
+│   │   ├── bes-onboard.md
+│   │   ├── bes-revize.md
+│   │   ├── bes-durum.md
+│   │   ├── bes-yillik.md
+│   │   └── bes-kurum-kesfet.md     # Manuel adapter keşfi
+│   ├── scripts/
+│   │   ├── schedule_monthly.py
+│   │   └── fetch_fund_returns.py   # Yedekli zincir + yapılandırılmış hata
+│   ├── memory/                     # Kalıcı kullanıcı verisi (gitignored)
+│   │   ├── README.md
+│   │   ├── _template/              # Şema 2: doğum tarihi + pay fiyatları + override geçmişi
+│   │   └── users/                  # Gerçek kullanıcı verisi (gitignored)
+│   └── evals/
+│       └── evals.json              # 20 test (5 trigger + 15 unit/edge case)
+├── README.md                       # Bu dosya
+├── CONTRIBUTING.md                 # Topluluğa katkı + adapter PR rehberi
+├── CHANGELOG.md                    # Sürüm geçmişi
 ├── LICENSE
 ├── .gitignore
-├── .github/workflows/ci.yml # Syntax + PII + cross-reference CI
-├── references/             # İlgili modlarda yüklenen detaylı rehberler
-│   ├── onboarding.md           # Doğum tarihi + 5 soru
-│   ├── risk_profile.md         # Profil → temel allokasyon (kanıt + gerekçe)
-│   ├── fund_research.md        # 4 kademeli yedekli veri zinciri
-│   ├── basket_construction.md  # Sepet algoritması + performans geri besleme
-│   ├── monthly_review.md       # 9 adımlık aylık akış
-│   ├── annual_review.md        # Yıllık compound + tema dağılımı + vergi notları
-│   ├── error_recovery.md       # 9 senaryo hata kurtarma playbook
-│   ├── adapter_discovery.md    # Yeni kurum keşif akışı (10 adım)
-│   └── providers/
-│       ├── turkiye_hayat.md    # ✅ Tam test edilmiş + pay fiyatı çekme
-│       └── _stub_template.md   # 🟡 Keşif iskeleti
-├── commands/
-│   ├── bes-onboard.md
-│   ├── bes-revize.md
-│   ├── bes-durum.md
-│   ├── bes-yillik.md
-│   └── bes-kurum-kesfet.md     # Manuel adapter keşfi
-├── scripts/
-│   ├── schedule_monthly.py
-│   └── fetch_fund_returns.py   # Yedekli zincir + yapılandırılmış hata
-├── memory/                 # Kalıcı kullanıcı verisi (gitignored)
-│   ├── README.md
-│   ├── _template/          # Şema 2: doğum tarihi + pay fiyatları + override geçmişi
-│   └── users/              # Gerçek kullanıcı verisi (gitignored)
-└── evals/
-    └── evals.json          # 20 test (5 trigger + 15 unit/edge case)
+└── .github/workflows/ci.yml        # Syntax + PII + cross-reference CI
 ```
 
 ## Topluluk katkısı

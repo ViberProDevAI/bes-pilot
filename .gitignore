@@ -1,5 +1,6 @@
 # Kullanıcı belleği — finansal bilgi içerir, ASLA push etme
 memory/users/
+bes-pilot/memory/users/
 
 # Python
 __pycache__/

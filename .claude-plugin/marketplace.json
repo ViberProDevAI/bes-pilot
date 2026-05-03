@@ -1,0 +1,53 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "bes-pilot",
+  "version": "0.2.0",
+  "owner": {
+    "name": "ViberProDevAI"
+  },
+  "metadata": {
+    "description": "Türkiye Bireysel Emeklilik Sistemi (BES) için Claude skill — risk profili, aylık fon sepeti revizesi, gerçek getiri ölçümü, eSube otomasyonu."
+  },
+  "plugins": [
+    {
+      "name": "bes-pilot",
+      "description": "Türkiye Bireysel Emeklilik Sistemi (BES) için kişisel pilot. Risk profili çıkarır, aylık fon sepeti revize eder, eSube üzerinden tarayıcıyla uygular, her revizede önceki sepetin gerçek getirisini BIST 100 ve TÜFE'ye karşı ölçer, yıllık compound özet sunar. Yatırım tavsiyesi değil — operasyonel rehber.",
+      "repository": "https://github.com/ViberProDevAI/bes-pilot",
+      "version": "0.2.0",
+      "author": {
+        "name": "ViberProDevAI"
+      },
+      "license": "MIT",
+      "category": "finance",
+      "keywords": [
+        "bes",
+        "bireysel-emeklilik",
+        "emeklilik",
+        "turkey",
+        "turkiye",
+        "finance",
+        "retirement",
+        "retirement-planning",
+        "fon-yonetimi",
+        "fund-management",
+        "esube",
+        "turkiye-hayat",
+        "befas",
+        "tefas"
+      ],
+      "tags": [
+        "bes",
+        "bireysel-emeklilik",
+        "turkey",
+        "finance",
+        "retirement",
+        "browser-automation"
+      ],
+      "source": "./",
+      "skills": [
+        "./bes-pilot"
+      ],
+      "strict": false
+    }
+  ]
+}
